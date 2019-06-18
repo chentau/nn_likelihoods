@@ -7,7 +7,7 @@ import inspect
 # Simulate (rt, choice) tuples from: SIMPLE DDM -----------------------------------------------
 
 # Simplest algorithm
-def  ddm_simulate(v = 0, # drift by timestep 'delta_t'
+def ddm_simulate(v = 0, # drift by timestep 'delta_t'
                   a = 1, # boundary separation
                   w = 0.5,  # between -1 and 1
                   s = 1, # noise sigma
@@ -37,19 +37,19 @@ def  ddm_simulate(v = 0, # drift by timestep 'delta_t'
         # Note that for purposes of consistency with Navarro and Fuss, the choice corresponding the lower barrier is +1, higher barrier is -1
         choices[n] = (-1) * np.sign(y)
 
-        if print_info == True:
-            if n % 1000 == 0:
-                print(n, ' datapoints sampled')
+        # if print_info == True:
+        #     if n % 1000 == 0:
+        #         print(n, ' datapoints sampled')
 
-    print('finished:', {'v': v,
-           'a': a,
-           'w': w,
-           's': s,
-           'delta_t': delta_t,
-           'max_t': max_t,
-           'n_samples': n_samples,
-           'simulator': 'ddm',
-           'boundary_fun_type': 'constant'})
+    # print('finished:', {'v': v,
+        #    'a': a,
+        #    'w': w,
+        #    's': s,
+        #    'delta_t': delta_t,
+        #    'max_t': max_t,
+        #    'n_samples': n_samples,
+        #    'simulator': 'ddm',
+        #    'boundary_fun_type': 'constant'})
            
     return (rts, choices, {'v': v,
                            'a': a,
@@ -131,13 +131,11 @@ def ddm_flexbound_simulate(v = 0,
 
         # Store choice and reaction time
         rts[n] = t
-        # Note that for purposes of consistency with Navarro and Fuss, the choice corresponding the lower barrier is +1, higher barrier is -1
-        # This is kind of a legacy issue at this point (plan is to flip this around, after appropriately reformulating navarro fuss wfpd function)
         choices[n] = np.sign(y)
 
-        if print_info == True:
-            if n % 1000 == 0:
-                print(n, ' datapoints sampled')
+        # if print_info == True:
+        #     if n % 1000 == 0:
+        #         print(n, ' datapoints sampled')
     return (rts, choices,  {'v': v,
                            'a': a,
                            'w': w,
@@ -183,7 +181,7 @@ def race_model(v = [0, 0, 0], # np.array expected in fact, one column of floats
     particles = np.zeros((n_particles, 1))
 
     # We just care about an upper boundary here: (more complicated things possible)
-    boundaries = np.zeros((int(max_t / delta_t), 1))
+    boundaries = np.zeros((int(max_t / delta_t + 1), 1))
     for i in range(0, int(max_t / delta_t), 1):
         boundaries[i] = boundary_fun(t = i * delta_t, **boundary_params)
 
@@ -238,9 +236,9 @@ def ornstein_uhlenbeck(v = 1, # drift parameter
         # Note that for purposes of consistency with Navarro and Fuss, the choice corresponding the lower barrier is +1, higher barrier is -1
         choices[n] = (-1) * np.sign(y)
 
-        if print_info == True:
-            if n % 1000 == 0:
-                print(n, ' datapoints sampled')
+        # if print_info == True:
+        #     if n % 1000 == 0:
+        #         print(n, ' datapoints sampled')
 
     return (rts, choices)
 # -------------------------------------------------------------------------------------------------
