@@ -8,6 +8,8 @@ import pandas as pd
 from time import time
 import inspect
 
+# NOTE: flexbound vectorized cython functions currently broken
+
 # Convert all variables to c types, and compare to previous benchmarks
 # Compare vectorized approach with C loop approach
 DTYPE = np.float32
