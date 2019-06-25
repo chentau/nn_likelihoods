@@ -37,11 +37,6 @@ def ddm_simulate(v = 0, # drift by timestep 'delta_t'
         # Note that for purposes of consistency with Navarro and Fuss, the choice corresponding the lower barrier is +1, higher barrier is -1
         choices[n] = (-1) * np.sign(y)
 
-<<<<<<< HEAD
-        # if print_info == True:
-        #     if n % 1000 == 0:
-        #         print(n, ' datapoints sampled')
-
     # print('finished:', {'v': v,
         #    'a': a,
         #    'w': w,
@@ -51,8 +46,6 @@ def ddm_simulate(v = 0, # drift by timestep 'delta_t'
         #    'n_samples': n_samples,
         #    'simulator': 'ddm',
         #    'boundary_fun_type': 'constant'})
-           
-=======
         if print_info == True:
             if n % 1000 == 0:
                 print(n, ' datapoints sampled')
@@ -67,7 +60,6 @@ def ddm_simulate(v = 0, # drift by timestep 'delta_t'
            'simulator': 'ddm',
            'boundary_fun_type': 'constant'})
 
->>>>>>> ac8e4082c9b8c1ec7734480a7b81a511fecd4805
     return (rts, choices, {'v': v,
                            'a': a,
                            'w': w,
@@ -149,16 +141,10 @@ def ddm_flexbound_simulate(v = 0,
         rts[n] = t
         choices[n] = np.sign(y)
 
-<<<<<<< HEAD
-        # if print_info == True:
-        #     if n % 1000 == 0:
-        #         print(n, ' datapoints sampled')
-=======
         if print_info == True:
             if n % 1000 == 0:
                 print(n, ' datapoints sampled')
 
->>>>>>> ac8e4082c9b8c1ec7734480a7b81a511fecd4805
     return (rts, choices,  {'v': v,
                            'a': a,
                            'w': w,
@@ -289,12 +275,6 @@ def race_model(v = [0, 0, 0], # np.array expected in fact, one column of floats
     particles = np.zeros((n_particles, 1))
 
     # We just care about an upper boundary here: (more complicated things possible)
-<<<<<<< HEAD
-    boundaries = np.zeros((int(max_t / delta_t + 1), 1))
-    for i in range(0, int(max_t / delta_t), 1):
-        boundaries[i] = boundary_fun(t = i * delta_t, **boundary_params)
-=======
->>>>>>> ac8e4082c9b8c1ec7734480a7b81a511fecd4805
 
     # Precompute boundary
     num_steps = int(max_t / delta_t) + 1
@@ -357,7 +337,6 @@ def ornstein_uhlenbeck(v = 0, # drift parameter
                        boundary_multiplicative = True,
                        boundary_params = {'p1': 0, 'p2':0}):
 
-<<<<<<< HEAD
     for n in range(0, n_samples, 1):
         y = w*a
         t = 0
@@ -392,8 +371,6 @@ def ornstein_uhlenbeck_flexbnd(v = 0, # drift parameter
                                print_info = True, # whether or not to print periodic update on number of samples generated
                                boundary_fun = None, # function of t (and potentially other parameters) that takes in (t, *args)
                                **boundary_params):
-=======
->>>>>>> ac8e4082c9b8c1ec7734480a7b81a511fecd4805
     # Initializations
     rts = np.zeros((n_samples,1)) # rt storage
     choices = np.zeros((n_samples,1)) # choice storage

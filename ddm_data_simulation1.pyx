@@ -704,3 +704,68 @@ def lca1(v = [0, 0, 0], # drift parameters (np.array expect: one column of float
     return (rts, choices)
 # --------------------------------------------------------------------------------------------------
 
+def lca1(v = np.array([0, 0, 0], dtype=DTYPE), # drift parameters (np.array expect: one column of floats)
+         w = np.array([0, 0, 0], dtype=DTYPE), # initial bias parameters (np.array expect: one column of floats)
+         float a = 1, # criterion height
+         float g = 0, # decay parameter
+         float b = 1, # inhibition parameter
+         float s = 1, # variance (can be one value or np.array of size as v and w)
+         float delta_t = 0.001, # time-step size in simulator
+         float max_t = 20, # maximal time
+         int n_samples = 2000, # number of samples to produce
+         print_info = True): # whether or not to periodically report the number of samples generated thus far
+
+    # Initializations
+    cdef int n_particles = len(v)
+    
+    rts = np.zeros((n_samples, 1), dtype=DTYPE)
+    cdef float[:,:] rts_view = rts
+    choices = np.zeros((n_samples, 1), dtype=np.intc)
+    cdef int[:,:] choices_view = choices
+    cdef float[:] v_view = v
+    cdef float[:] w_view = w
+    
+    cdef float[:] particles_reduced_view
+    cdef float[:] particles_view
+    
+    cdef float delta_t_sqrt = sqrt(delta_t)
+    cdef float sqrt_st = s * delta_t_sqrt
+    
+    cdef int n, i
+    cdef int m = 0
+    cdef float t, particles_sum
+    
+    cdef int num_draws = int(max_t / delta_t + 1)
+    cdef float[:] gaussian_values = draw_gaussian(num_draws)
+
+    for n in range(0, n_samples):
+
+        # initialize y, t and time_counter
+        particles_reduced_sum = np.zeros(n_particles, dtype=DTYPE)
+        particles_reduced_view = particles_reduced_sum
+        particles = w * a
+        particles_view = particles
+        t = 0.0
+
+        while check_finished(particles_view, a) and t <= max_t:
+            particles_sum = csum(particles_view)
+            for i in range(n_particles):
+                particles_reduced_view[i] = (-1) * particles_view[i] + particles_sum
+                particles_view[i] += ((v_view[i] - (g * particles_view[i]) - \
+                        (b * particles_reduced_view[i])) * delta_t) + (sqrt_st * gaussian_values[m])
+                particles_view[i] = fmax(0.0, particles_view[i])
+            
+            t += delta_t
+            m += 1
+            
+            if (m == num_draws):
+                m = 0
+                gaussian_values = draw_gaussian(num_draws)
+
+        rts_view[n, 0] = t
+        choices_view[n, 0] = particles.argmax()
+
+        # if print_info == True:
+        #     if n % 1000 == 0:
+        #         print(n, ' datapoints sampled')
+    return (rts, choices)
