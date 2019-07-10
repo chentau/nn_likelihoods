@@ -2,7 +2,7 @@ import numpy as np
 import multiprocessing as mp
 import ctypes
 
-class MH_MCMC:
+class MetropolisHastingsParallel:
 
     def __init__(self, dims, num_chains, bounds, target, proposal_var=.01):
         """

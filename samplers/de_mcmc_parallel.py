@@ -2,8 +2,8 @@ import numpy as np
 import multiprocessing as mp
 import ctypes
 
-class DE_CROSS_MCMC:
-    def __init__(self, dims, bounds, NP, target, gamma, crossover_prob, proposal_var=.01):
+class DifferentialEvolutionParallel:
+    def __init__(self, dims, bounds, NP, target, gamma, proposal_var=.01):
         """
         Params
         -----
@@ -27,20 +27,12 @@ class DE_CROSS_MCMC:
         self.bound_min = bounds[0]
         self.bound_max = bounds[1]
         self.proposal_var = proposal_var
-        self.crossover_prob = crossover_prob
-
-        self.cross_length_dist = crossover_prob ** np.arange(0, self.dims)
-        self.cross_length_dist = self.cross_length_dist / self.cross_length_dist.sum()
 
     def propose(self, ix):
         i, j = np.random.choice(self.NP, size=2, replace=False)
-        n = np.random.choice(np.arange(0, self.dims))
-        l = np.random.choice(np.arange(0, self.dims), p=self.cross_length_dist)
-        index = np.sort(np.arange(n, n + l + 1) % self.dims)
-        proposal = self.chains[ix].copy()
-        proposal[index] = self.chains[ix, index] + self.gamma * (self.chains[i, index] - \
-                self.chains[j, index]) + np.random.multivariate_normal(mean = 
-                        np.zeros(index.shape[0]), cov=self.proposal_var * np.eye(index.shape[0]))
+        proposal = self.chains[ix] + self.gamma * (self.chains[i] - \
+                self.chains[j]) + np.random.multivariate_normal(mean = 
+                        np.zeros(self.dims), cov=self.proposal_var * np.eye(self.dims))
         proposal = np.clip(proposal, self.bound_min, self.bound_max)
         proposal_lp = self.target(proposal, data=self.data)
         acceptance_prob = proposal_lp - self.chains_lp[ix]

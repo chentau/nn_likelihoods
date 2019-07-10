@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 
-class DE_MCMC():
+class DifferentialEvolutionSequential():
     
     def __init__(self, dims, bounds, NP, target, gamma):
         """
