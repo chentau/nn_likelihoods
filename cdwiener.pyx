@@ -87,6 +87,7 @@ def fptd(t, v, a, w, eps):
 # --------------------------------
 
 def batch_fptd(t, double v, double a, double w, double eps=1e-8):
+    # Use when rts and choices vary, but parameters are held constant
     cdef int i
     cdef double[:] t_view = t
     cdef int n = t.shape[0]
@@ -97,9 +98,7 @@ def batch_fptd(t, double v, double a, double w, double eps=1e-8):
     for i in range(n):
         if t_view[i] == 0:
             likelihoods_view[i] = 1e-29
-        if t_view[i] < 0:
-            v = (-1) * v
-            w = 1 - w
+        elif t_view[i] < 0:
             t_view[i] = (-1) * t_view[i]
 
             sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
@@ -122,6 +121,45 @@ def batch_fptd(t, double v, double a, double w, double eps=1e-8):
 
     return likelihoods
 
+def array_fptd(t, v, a, w, double eps=1e-8):
+    # Use when all inputs vary, but we want to feed in an array of them
+    cdef int i
+    cdef int n = t.shape[0]
+    cdef double[:] t_view = t
+    cdef double[:] v_view = v
+    cdef double[:] a_view = a
+    cdef double[:] w_view = w
+
+    likelihoods = np.zeros(n)
+    cdef double[:] likelihoods_view = likelihoods
+
+    for i in range(n):
+        if t_view[i] == 0:
+            likelihoods_view[i] = 1e-29
+        elif t_view[i] < 0:
+            t_view[i] = (-1) * t_view[i]
+
+            sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
+            leading_term = calculate_leading_term(t_view[i], (-1) * v_view[i], a_view[i],
+                    1 - w_view[i])
+            if sgn_lambda >= 0:
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(
+                    t_view[i] / (a_view[i]**2), 1 - w_view[i], k_l))
+            else:
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(
+                    t_view[i] / (a_view[i]**2), 1 - w, k_s))
+        elif t_view[i] > 0:
+            sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
+            leading_term = calculate_leading_term(t_view[i], v_view[i], 
+                    a_view[i], w_view[i])
+            if sgn_lambda >= 0:
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(
+                    t_view[i] / (a_view[i]**2), w_view[i], k_l))
+            else:
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(
+                    t_view[i] / (a_view[i]**2), w_view[i], k_s))
+
+    return likelihoods
 
 # CHOICE PROBABILITIES -----------
 def choice_probabilities(v, a , w, allow_analytic = True):
