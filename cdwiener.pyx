@@ -16,8 +16,8 @@ from libc.math cimport sin, exp, sqrt, M_PI, fmax, fmin, log
 #         fptd_sum += i * np.exp( - ((i**2) * (np.pi**2) * t) / 2) * np.sin(i * np.pi * w)
 #     return fptd_sum * np.pi
 
-cdef double fptd_large(double t, double w, int k):
-    cdef double fptd_sum = 0
+cdef float fptd_large(float t, float w, int k):
+    cdef float fptd_sum = 0
 
     cdef int i
     for i in range(1, k + 1):
@@ -39,11 +39,11 @@ cdef double fptd_large(double t, double w, int k):
 #        fptd_sum += (w + 2 * i) * np.exp( - ((w + 2 * i)**2) / (2 * t))
 #    return fptd_sum * (1 / np.sqrt(2 * np.pi * (t**3)))
 
-cdef double fptd_small(double t, double w, int k):
-    cdef double temp = (k - 1) / 2
+cdef float fptd_small(float t, float w, int k):
+    cdef float temp = (k - 1) / 2
     cdef int floor = np.floor(temp)
     cdef int ceiling = - np.ceil(temp)
-    cdef double fptd_sum = 0
+    cdef float fptd_sum = 0
     cdef int i
 
     for i in range(ceiling, floor + 1, 1):
@@ -51,11 +51,11 @@ cdef double fptd_small(double t, double w, int k):
     return fptd_sum * (1 / sqrt(2 * M_PI * (t**3)))
 
 # Leading term (shows up for both large and small time)
-cdef double calculate_leading_term(double t, double v, double a, double w):
+cdef float calculate_leading_term(float t, float v, float a, float w):
     return 1 / (a**2) * exp( - (v * a * w) - (((v**2) * t) / 2))
 
 # Choice function to determine which approximation is appropriate (small or large time)
-cdef choice_function(double t, double eps):
+cdef choice_function(float t, float eps):
     eps_l = fmin(eps, 1 / (t * M_PI))
     #eps_l = eps ALEX-NOTE This seems like a bug (negating effect of previous line...)
     eps_s = fmin(eps, 1 / (2 * sqrt(2 * M_PI * t)))
@@ -65,7 +65,7 @@ cdef choice_function(double t, double eps):
     return k_s - k_l, k_l, k_s
 
 # Actual fptd (first-passage-time-distribution) algorithm
-def fptd(t, v, a, w, eps):
+def fptd(t, v, a, w, eps=1e-10):
     # negative reaction times signify upper boundary crossing
     # we have to change the parameters as suggested by navarro & fuss (2009)
     if t < 0:
@@ -86,7 +86,7 @@ def fptd(t, v, a, w, eps):
         return 1e-29
 # --------------------------------
 
-def batch_fptd(t, double v, double a, double w, double eps=1e-8):
+def batch_fptd(t, double v, double a, double w, double eps=1e-9):
     # Use when rts and choices vary, but parameters are held constant
     cdef int i
     cdef double[:] t_view = t
@@ -97,31 +97,31 @@ def batch_fptd(t, double v, double a, double w, double eps=1e-8):
 
     for i in range(n):
         if t_view[i] == 0:
-            likelihoods_view[i] = 1e-29
+            likelihoods_view[i] = 1e-48
         elif t_view[i] < 0:
             t_view[i] = (-1) * t_view[i]
 
             sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
             leading_term = calculate_leading_term(t_view[i], (-1) * v, a, 1 - w)
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(t_view[i] / (a**2),
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(t_view[i] / (a**2),
                     1 - w, k_l))
             else:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(t_view[i] / (a**2),
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(t_view[i] / (a**2),
                     1 - w, k_s))
         elif t_view[i] > 0:
             sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
             leading_term = calculate_leading_term(t_view[i], v, a, w)
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(t_view[i] / (a**2),
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(t_view[i] / (a**2),
                     w, k_l))
             else:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(t_view[i] / (a**2),
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(t_view[i] / (a**2),
                     w, k_s))
 
     return likelihoods
 
-def array_fptd(t, v, a, w, double eps=1e-8):
+def array_fptd(t, v, a, w, double eps=1e-9):
     # Use when all inputs vary, but we want to feed in an array of them
     cdef int i
     cdef int n = t.shape[0]
@@ -135,7 +135,7 @@ def array_fptd(t, v, a, w, double eps=1e-8):
 
     for i in range(n):
         if t_view[i] == 0:
-            likelihoods_view[i] = 1e-29
+            likelihoods_view[i] = 1e-48
         elif t_view[i] < 0:
             t_view[i] = (-1) * t_view[i]
 
@@ -143,30 +143,21 @@ def array_fptd(t, v, a, w, double eps=1e-8):
             leading_term = calculate_leading_term(t_view[i], (-1) * v_view[i], a_view[i],
                     1 - w_view[i])
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(
                     t_view[i] / (a_view[i]**2), 1 - w_view[i], k_l))
             else:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(
-                    t_view[i] / (a_view[i]**2), 1 - w, k_s))
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(
+                    t_view[i] / (a_view[i]**2), 1 - w_view[i], k_s))
         elif t_view[i] > 0:
             sgn_lambda, k_l, k_s = choice_function(t_view[i], eps)
             leading_term = calculate_leading_term(t_view[i], v_view[i], 
                     a_view[i], w_view[i])
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(
                     t_view[i] / (a_view[i]**2), w_view[i], k_l))
             else:
-                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(
+                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(
                     t_view[i] / (a_view[i]**2), w_view[i], k_s))
 
     return likelihoods
 
-# CHOICE PROBABILITIES -----------
-def choice_probabilities(v, a , w, allow_analytic = True):
-    if w == 0.5 and allow_analytic:
-        return choice_probabilities_analytic(v, a)
-    return integrate.quad(fptd, 0, 100, args = (v, a, w, 1e-29))[0]
-
-def choice_probabilities_analytic(v, a):
-    return (1 / (1 + np.exp(v * a)))
-# --------------------------------
