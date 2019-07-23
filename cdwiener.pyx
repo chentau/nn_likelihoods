@@ -7,43 +7,19 @@ from libc.math cimport sin, exp, sqrt, M_PI, fmax, fmin, log
 
 # WFPT NAVARROS FUSS -------------
 # Large-time approximation to fpt distribution
-
-# def fptd_large(t, w, k):
-#     terms = np.arange(1, k+1, 1)
-#     fptd_sum = 0
-
-#     for i in terms:
-#         fptd_sum += i * np.exp( - ((i**2) * (np.pi**2) * t) / 2) * np.sin(i * np.pi * w)
-#     return fptd_sum * np.pi
-
-cdef float fptd_large(float t, float w, int k):
-    cdef float fptd_sum = 0
-
+cdef double fptd_large(double t, double w, int k):
+    cdef double fptd_sum = 0
     cdef int i
     for i in range(1, k + 1):
         fptd_sum += i * exp( - ((i**2) * (M_PI ** 2) * t) / 2) * sin(i * M_PI * w)
-
     return fptd_sum * M_PI
 
 # Small-time approximation to fpt distribution
-
-#def fptd_small(t, w, k):
-#    temp = (k-1)/2
-#    flr = np.floor(temp).astype(int)
-#    cei = - np.ceil(temp).astype(int)
-#    terms = np.arange(cei, flr + 1, 1)
-#    #print(terms)
-#    fptd_sum = 0
-
-#    for i in terms:
-#        fptd_sum += (w + 2 * i) * np.exp( - ((w + 2 * i)**2) / (2 * t))
-#    return fptd_sum * (1 / np.sqrt(2 * np.pi * (t**3)))
-
-cdef float fptd_small(float t, float w, int k):
-    cdef float temp = (k - 1) / 2
+cdef double fptd_small(double t, double w, int k):
+    cdef double temp = (k - 1) / 2
     cdef int floor = np.floor(temp)
     cdef int ceiling = - np.ceil(temp)
-    cdef float fptd_sum = 0
+    cdef double fptd_sum = 0
     cdef int i
 
     for i in range(ceiling, floor + 1, 1):
@@ -51,17 +27,15 @@ cdef float fptd_small(float t, float w, int k):
     return fptd_sum * (1 / sqrt(2 * M_PI * (t**3)))
 
 # Leading term (shows up for both large and small time)
-cdef float calculate_leading_term(float t, float v, float a, float w):
+cdef double calculate_leading_term(double t, double v, double a, double w):
     return 1 / (a**2) * exp( - (v * a * w) - (((v**2) * t) / 2))
 
 # Choice function to determine which approximation is appropriate (small or large time)
-cdef choice_function(float t, float eps):
+cdef choice_function(double t, double eps):
     eps_l = fmin(eps, 1 / (t * M_PI))
-    #eps_l = eps ALEX-NOTE This seems like a bug (negating effect of previous line...)
     eps_s = fmin(eps, 1 / (2 * sqrt(2 * M_PI * t)))
-
-    k_l = fmax(sqrt( - (2 * log(M_PI * t * eps_l)) / (M_PI**2 * t)), 1 / (M_PI * sqrt(t)))
-    k_s = fmax(2 + sqrt( - 2 * t * log(2 * eps_s * sqrt(2 * M_PI * t))), 1 + sqrt(t))
+    k_l = np.ceil(fmax(sqrt( - (2 * log(M_PI * t * eps_l)) / (M_PI**2 * t)), 1 / (M_PI * sqrt(t))))
+    k_s = np.ceil(fmax(2 + sqrt( - 2 * t * log(2 * eps_s * sqrt(2 * M_PI * t))), 1 + sqrt(t)))
     return k_s - k_l, k_l, k_s
 
 # Actual fptd (first-passage-time-distribution) algorithm
@@ -69,19 +43,20 @@ def fptd(t, v, a, w, eps=1e-10):
     # negative reaction times signify upper boundary crossing
     # we have to change the parameters as suggested by navarro & fuss (2009)
     if t < 0:
-       v = - v
-       w = 1 - w
-       t = np.abs(t)
+        v = - v
+        w = 1 - w
+        t = np.abs(t)
 
     #print('lambda: ' + str(sgn_lambda))
     #print('k_s: ' + str(k_s))
     if t != 0:
-        sgn_lambda, k_l, k_s = choice_function(t, eps)
         leading_term = calculate_leading_term(t, v, a, w)
+        t_adj = t / (a**2)
+        sgn_lambda, k_l, k_s = choice_function(t_adj, eps)
         if sgn_lambda >= 0:
-            return max(1e-29, leading_term * fptd_large(t / (a**2), w, k_l))
+            return max(eps, leading_term * fptd_large(t_adj, w, k_l))
         else:
-            return max(1e-29, leading_term * fptd_small(t / (a**2), w, k_s))
+            return max(eps, leading_term * fptd_small(t_adj, w, k_s))
     else:
         return 1e-29
 # --------------------------------
