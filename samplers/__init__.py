@@ -7,4 +7,4 @@ from .mh_mcmc_componentwise import MetropolisHastingsComponentwise
 from .particle_filter_naive import ParticleFilterSequential
 from .particle_filter_parallel import ParticleFilterParallel
 from .slice_sampler import SliceSampler
-from .importance import ImportanceSampling
+from .importance import ImportanceSampler
