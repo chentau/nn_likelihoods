@@ -133,7 +133,7 @@ def batch_fptd(t, double v, double a, double w, double eps=1e-10):
     return likelihoods
 
 
-def array_fptd(t, v, a, w, double eps=1e-9):
+def array_fptd(t, v, a, w, double eps=1e-10):
     # Use when all inputs vary, but we want to feed in an array of them
     cdef int i
     cdef int n = t.shape[0]
@@ -149,7 +149,7 @@ def array_fptd(t, v, a, w, double eps=1e-9):
 
     for i in range(n):
         if t_view[i] == 0:
-            likelihoods_view[i] = 1e-48
+            likelihoods_view[i] = 1e-29
         elif t_view[i] < 0:
             temp = fabs(t_view[i])
             t_adj = temp / (a_view[i] ** 2)
@@ -158,10 +158,10 @@ def array_fptd(t, v, a, w, double eps=1e-9):
                     1 - w_view[i])
             sgn_lambda, k_l, k_s = choice_function(t_adj, eps)
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(t_adj, 
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(t_adj, 
                     1 - w_view[i], k_l))
             else:
-                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(t_adj, 
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(t_adj, 
                     1 - w_view[i], k_s))
         elif t_view[i] > 0:
             t_adj = t_view[i] / (a_view[i] ** 2)
@@ -170,10 +170,10 @@ def array_fptd(t, v, a, w, double eps=1e-9):
                     a_view[i], w_view[i])
             sgn_lambda, k_l, k_s = choice_function(t_adj, eps)
             if sgn_lambda >= 0:
-                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_large(
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_large(
                     t_adj, w_view[i], k_l))
             else:
-                likelihoods_view[i] = fmax(1e-48, leading_term * fptd_small(
+                likelihoods_view[i] = fmax(1e-29, leading_term * fptd_small(
                     t_adj, w_view[i], k_s))
 
     return likelihoods

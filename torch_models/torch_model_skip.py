@@ -6,7 +6,7 @@ class ResidualNet(nn.Module):
     def __init__(self, input_dim=5, num_layers=3, layer_sizes=[20,80,1],
             layer_activations=["relu", "relu", "linear"]):
         # number of hidden layers = num_layer - 1
-        super(DDM_NN, self).__init__()
+        super(ResidualNet, self).__init__()
         self.num_layers = num_layers
 
         # Initialize layers
@@ -32,7 +32,3 @@ class ResidualNet(nn.Module):
             x = self.layer_activations[i](layer(x)) + x # skip connections
         x = self.layers[-1](x)
         return x
-
-
-
-

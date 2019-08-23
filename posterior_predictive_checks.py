@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import cddm_data_simulation as cd
 import boundary_functions as bf
 
-method = "ddm"
+method = "full"
 
 if method == "ddm":
     dgp = cd.ddm_flexbound_simulate
@@ -19,14 +19,20 @@ elif method == "ornstein":
     boundary = bf.constant
     params = ["v", "a", "w", "g"]
     data_folder = "/users/afengler/data/tony/kde/ornstein_uhlenbeck/method_comparison/"
+elif method == "full":
+    dgp = cd.full_ddm
+    boundary = bf.constant
+    params = ["v", "a", "w", "dw", "sdv"]
+    data_folder = "/users/afengler/data/tony/kde/full_ddm/method_comparison/"
 
 files = os.listdir(data_folder)
 files = [f for f in files if re.match("kde_sim_random.*", f)]
 
-true_params, samples = pickle.load(open(data_folder + files[0], "rb"))
+true_params, data, samples = pickle.load(open(data_folder + files[0], "rb"))
 for f in files[1:]:
-    param_tmp, samples_tmp = pickle.load(open(data_folder + f, "rb"))
+    param_tmp, data_tmp, samples_tmp = pickle.load(open(data_folder + f, "rb"))
     true_params = np.concatenate([true_params, param_tmp])
+    data = np.concatenate([data, data_tmp])
     samples = np.concatenate([samples, samples_tmp])
 
 eap = np.zeros((true_params.shape[0], len(params)))

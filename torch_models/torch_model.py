@@ -21,9 +21,9 @@ class Net(nn.Module):
             if activation == "relu":
                 self.layer_activations.append(F.relu)
             elif activation == "sigmoid":
-                self.layer_activations.append(F.sigmoid)
-            elif activation == "linear":
-                continue
+                self.layer_activations.append(torch.sigmoid)
+            elif activation == "leakyrelu":
+                self.layer_activations.append(F.leaky_relu)
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):

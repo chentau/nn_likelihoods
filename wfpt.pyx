@@ -12,7 +12,7 @@
 # Copyleft Thomas Wiecki (thomas_wiecki[at]brown.edu) & Imri Sofer, 2011
 # GPLv3
 
-import hddm
+# import hddm
 
 import scipy.integrate as integrate
 from copy import copy

@@ -3,24 +3,18 @@ import numpy as np
 from cdwiener import array_fptd
 import os
 import pandas as pd
+import re
 import time
 from datetime import datetime
 import pickle
 import yaml
 
-from kde_training_utilities import kde_load_data
-from kde_training_utilities import kde_make_train_test_split
+data_folder = "/users/afengler/data/kde/full_ddm/train_test_data_20000/"
+files = os.listdir(data_folder)
+files = [f for f in files if re.match("data_.*", f)]
 
-data_folder = "/users/afengler/data/tony/kde/ddm/deep_inference_train_test/"
 # kde_make_train_test_split(folder = data_folder,
 #                           p_train = 0.8)
-
-# Load train test split
-with open(data_folder + "train_features.pickle", "rb") as f:
-    X = pickle.load(f)
-
-with open(data_folder + "train_labels.pickle", "rb") as f:
-    y = pickle.load(f)
 
 # ix = np.arange(X.shape[0])
 # np.random.shuffle(ix)
@@ -30,7 +24,7 @@ with open(data_folder + "train_labels.pickle", "rb") as f:
 timestamp = datetime.now().strftime('%m_%d_%y_%H_%M_%S')
 # save model configuration and hyperparams in folder
 
-model_path  = "/users/afengler/data/tony/kde/ddm/keras_models"
+model_path  = "/users/afengler/data/tony/kde/full_ddm/keras_models"
 model_path += "/" + "deep_inference" + timestamp
 
 if not os.path.exists(model_path):
@@ -51,8 +45,8 @@ x = keras.layers.Conv1D(128, kernel_size=3, strides=2, activation="relu")(x)
 x = keras.layers.Conv1D(128, kernel_size=3, strides=2, activation="relu")(x)
 x = keras.layers.Conv1D(128, kernel_size=3, strides=2, activation="relu")(x)
 x = keras.layers.GlobalAveragePooling1D()(x)
-mean = keras.layers.Dense(3)(x)
-var = keras.layers.Dense(3, activation="softplus")(x)
+mean = keras.layers.Dense(5)(x)
+var = keras.layers.Dense(5, activation="softplus")(x)
 out = keras.layers.Concatenate()([mean, var])
 
 model = keras.Model(inp, out)

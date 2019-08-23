@@ -317,23 +317,21 @@ def kde_make_train_test_split(folder = '',
 
     test_id = np.invert(train_id)
 
+    print(data.info())
     # Write to file
     print('writing to file...')
-    data.iloc[train_id, :(n_cols - 1)].to_pickle(folder + 'train_features.pickle',
-                                                          protocol = 4)
+    data.iloc[train_id, :(n_cols - 1)].to_hdf(folder + 'train_features.h5', key="df", mode="w")
 
-    data.iloc[test_id, :(n_cols - 1)].to_pickle(folder + 'test_features.pickle',
-                                                         protocol = 4)
+    data.iloc[test_id, :(n_cols - 1)].to_hdf(folder + 'test_features.h5', key="df", mode="w")
 
-    data.iloc[train_id, (n_cols - 1)].to_pickle(folder + 'train_labels.pickle',
-                                                         protocol = 4)
+    data.iloc[train_id, (n_cols - 1)].to_hdf(folder + 'train_labels.h5', key="df", mode="w")
 
-    data.iloc[test_id, (n_cols - 1)].to_pickle(folder + 'test_labels.pickle',
-                                                        protocol = 4)
+    data.iloc[test_id, (n_cols - 1)].to_hdf(folder + 'test_labels.h5', key="df", mode="w")
 
     return 'success'
 
 def kde_load_data(folder = '',
+                  pickle=True,
                   log = False,
                   prelog_cutoff = 1e-29 # either 'none' or number (like 1e-29)
                   ):

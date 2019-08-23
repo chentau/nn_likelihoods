@@ -50,12 +50,13 @@ class SliceSampler:
 
     def _slice_sample(self, prev, prev_lp):
         out = prev.copy()
+        lp = prev_lp
         for dim in range(self.dims):
             z = prev_lp - np.random.exponential()
             left, right = self._find_interval(z, prev, dim)
 
             # Adaptively shrink the interval
-            while not np.isclose(left,right, 1e-2):
+            while not np.isclose(left,right, 1e-3):
                 u = np.random.uniform()
                 out[dim] = left + u * (right - left)
                 lp = self.target(out, self.data)
@@ -71,6 +72,7 @@ class SliceSampler:
     def sample(self, data, num_samples=1000):
         self.data = data
         self.samples = np.zeros((num_samples, self.dims))
+        self.lp = np.zeros(num_samples)
 
         init = np.zeros(self.dims)
         for dim in range(self.dims):
@@ -78,6 +80,7 @@ class SliceSampler:
         init_lp = self.target(init, self.data)
         
         self.samples[0], prev_lp = self._slice_sample(init, init_lp)
+        self.lp[0] = prev_lp
 
         print("Beginning sampling")
 
@@ -85,4 +88,5 @@ class SliceSampler:
             if i % 100 == 0:
                 print("Iteration {}".format(i))
             self.samples[i], prev_lp = self._slice_sample(self.samples[i-1], prev_lp)
+            self.lp[i] = prev_lp
 

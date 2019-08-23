@@ -1,15 +1,17 @@
 import numpy as np
 import pickle
+
 from cddm_data_simulation import ddm_simulate
 from samplers import *
-from tensorflow import keras
+from np_model import np_predict
+# from tensorflow import keras
 
 print("loading neural network model")
 
 network_path = "/home/tony/repos/temp_models/keras_models/\
-dnnregressoranalytical_ddm_07_26_19_15_43_44/model_final.h5"
+dnnregressoranalytical_ddm_07_26_19_15_43_44/"
 
-model = keras.models.load_model(network_path)
+# model = keras.models.load_model(network_path)
 
 print("successfully loaded")
 
@@ -25,47 +27,10 @@ def extract_info(model):
         activations.append(layer.get_config()["activation"])
     return weights, biases, activations
 
-weights, biases, activations = extract_info(model)
-
-def relu(x):
-    return np.maximum(0, x)
-
-def sigmoid(x):
-    return 1 / (1 + np.exp((-1) * x))
-
-def linear(x):
-    return x
-
-activation_fns = {
-        "relu": relu,
-        "sigmoid": sigmoid,
-        "linear": linear
-        }
-
-def np_predict(x, weights, biases, activations):
-    """
-    Redefine the keras .predict function in numpy
-
-    Params
-    ------
-    x: np.array((*batch_size, n_input))
-        inputs to calculate the prediction for.
-        batch size is optional
-    weights: list of np.ndarray((n_input, n_hidden))
-        list of the weight matrices for each layer
-    biases: list of np.ndarray((n_hidden, ))
-        list of the biases for each layer. Must be of
-        same length as the weights list
-    activations: list of strings
-        list of the activations to apply for each layer
-    """
-    num_layers = len(weights)
-    out = x
-    for l in range(num_layers):
-        out = np.dot(out, weights[l])
-        out += biases[l]
-        out = activation_fns[activations[l]](out)
-    return out
+# weights, biases, activations = extract_info(model)
+weights = pickle.load(open(network_path + "weights.pickle", "rb"))
+biases = pickle.load(open(network_path + "biases.pickle", "rb"))
+activations = pickle.load(open(network_path + "activations.pickle", "rb"))
 
 def informative_wrapper(true_params):
     v_dist = ss.norm(true_params[0], .1)
@@ -154,8 +119,8 @@ def test_slice_sampling(num_samples = 2000, w = .4 / 256, p = 8):
     model.sample(data, num_samples=num_samples)
     return model, true_params
 
-def test_importance_sampling(num_particles=10000):
+def test_importance_sampling(num_particles=10000, max_iter=20):
     true_params, data = generate_data()
-    model = ImportanceSampling(bounds=np.array([[-1, 1], [.5, 1.5], [.3, .7]]), target = target)
+    model = ImportanceSampler(bounds=np.array([[-1, .5, .3], [1, 1.5, .7]]), target = target)
     model.sample(data, num_particles=num_particles)
     return model, true_params
